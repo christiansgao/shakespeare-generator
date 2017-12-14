@@ -1,0 +1,4 @@
+.idea/
+tensorflowshakespeare/checkpoints/*
+tensorflowshakespeare/checkpointsold/*
+tensorflowshakespeare/mycheckpoints/*
