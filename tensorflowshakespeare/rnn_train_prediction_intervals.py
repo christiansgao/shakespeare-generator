@@ -44,8 +44,8 @@ dropout_pkeep = 0.8    # some dropout
 #
 # print("Completed")
 
-codetext, nothing, nothing = txt.read_data_files("authors/shakespeare/*.txt", validation=False)
-onlyfiles = [f for f in listdir("authors/random/") if isfile(join("authors/random/", f))]
+codetext, nothing, nothing = txt.read_data_files("authors/shakespeare/farewelltraining.txt", validation=False)
+onlyfiles = [f for f in listdir("authors/random/") if isfile(join("authors/shakespeare/farewelltraining.txt", f))]
 
 with open('results/loss_shakespeare_random_authors.csv',mode='w') as csvfile:
     writer = csv.writer(csvfile, delimiter=',')

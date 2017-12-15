@@ -25,10 +25,11 @@ dropout_pkeep = 0.8    # some dropout
 
 # load data, either shakespeare, or the Python source of Tensorflow itself
 
-codetext, nothing, nothing = txt.read_data_files("authors/hemmingway/farewelltraining.txt", validation=False)
+codetext, nothing, nothing = txt.read_data_files("authors/hemmingway/bootstrap/*.txt", validation=False)
+#codetext, nothing, nothing = txt.read_data_files("authors/hemmingway/farewelltraining.txt", validation=False)
 test_set, nothing, nothing = txt.read_data_files("authors/hemmingway/farewelltesting.txt", validation=False)
 
-with open('results/montecarlo.csv',mode='w') as csvfile:
+with open('results/montecarlo_hemming_with_boot.csv',mode='w') as csvfile:
     writer = csv.writer(csvfile, delimiter=',')
 
     # display some stats on the data
@@ -116,7 +117,7 @@ with open('results/montecarlo.csv',mode='w') as csvfile:
     step = 0
 
     # training loop
-    for x, y_, epoch in txt.rnn_minibatch_sequencer(codetext, BATCHSIZE, SEQLEN, nb_epochs=1000):
+    for x, y_, epoch in txt.rnn_minibatch_sequencer(codetext, BATCHSIZE, SEQLEN, nb_epochs=100):
 
         # train on one minibatch
         feed_dict = {X: x, Y_: y_, Hin: istate, lr: learning_rate, pkeep: dropout_pkeep, batchsize: BATCHSIZE}
@@ -134,6 +135,7 @@ with open('results/montecarlo.csv',mode='w') as csvfile:
         # tested: validating with 5K sequences instead of 1K is only slightly more accurate, but a lot slower.
         if step > _50_BATCHES and len(codetext) > 0:
             print("MONTECARLO VALIDATION TIME!/n")
+            print("EPOCH: " + str(epoch))
             VALI_SEQLEN = 1*1024  # Sequence length for validation. State will be wrong at the start of each sequence.
             bsize = int(len(codetext)/10) // VALI_SEQLEN
             vali_x, vali_y, _ = next(txt.rnn_minibatch_sequencer(codetext, bsize, VALI_SEQLEN, 1))  # all data in 1 batch
@@ -148,7 +150,6 @@ with open('results/montecarlo.csv',mode='w') as csvfile:
             validation_writer.add_summary(smm, step)
 
             writer.writerow([ls, training_loss])
-
             step = 0
 
         # display progress bar
