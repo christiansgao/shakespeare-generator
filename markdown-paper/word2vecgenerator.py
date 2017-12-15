@@ -4,7 +4,7 @@ from random import *
 
 print(random())
 def getWordsList(words_file):
-    open_file = open(words_file, 'w')
+    open_file = open(words_file, 'r')
     words_list =[]
     words_list2 = []
     contents = open_file.readlines()
@@ -50,6 +50,6 @@ for i in list(range(100)):
         if words_boot.__len__() != 0:
             words_list_boot.append(words_boot)
 
-    writeWords(string.Format("data/farewellbootstrapped{}.txt",i), words_list_boot)
+    writeWords(string.Format("data/bootstrapped/farewellbootstrapped-{}.txt",str(i)), words_list_boot)
 
 #print(most_similar_word)
