@@ -35,7 +35,7 @@ words_list = getWordsList("data/farewelltraining.txt")
 # Load Google's pre-trained Word2Vec model.
 model = gensim.models.KeyedVectors.load_word2vec_format('/home/christian/Documents/MLML/shakespeare-generator/markdown-paper/models/GoogleNews-vectors-negative300.bin.gz', binary=True)
 
-for i in list(range(100)):
+for i in list(range(2,100)):
     words_list_boot = []
     for words in words_list:
         words_boot = []
@@ -50,6 +50,7 @@ for i in list(range(100)):
         if words_boot.__len__() != 0:
             words_list_boot.append(words_boot)
 
-    writeWords(string.Format("data/bootstrapped/farewellbootstrapped-{}.txt",str(i)), words_list_boot)
+    filename = "data/bootstrapped/farewellbootstrapped-%s.txt" % (str(i))
+    writeWords(filename, words_list)
 
 #print(most_similar_word)

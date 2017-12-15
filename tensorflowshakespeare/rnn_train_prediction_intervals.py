@@ -1,26 +1,9 @@
-# encoding: UTF-8
-# Copyright 2017 Google.com
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-
-
-
 
 import urllib.request
 import urllib.error
 import string
-
-for i in list(range(1,99)):
-    print("Starting: " + str(i))
-    response = urllib.request.urlopen('http://www.gutenberg.org/cache/epub/'+str(i)+'/pg'+str(i)+'.txt')
-    file = open("/home/christian/Documents/MLML/shakespeare-generator/markdown-paper/data/bootstrapped/testfile" + str(i) + ".txt", 'wb')
-    file.write(response.read())
-    file.close()
-    response.close()
-print("Completed")
-
-
+from os import listdir
+from os.path import isfile, join
 import tensorflow as tf
 from tensorflow.contrib import layers
 from tensorflow.contrib import rnn  # rnn stuff temporarily in contrib, moving back to code in TF 1.1
@@ -40,18 +23,35 @@ NLAYERS = 3
 learning_rate = 0.001  # fixed learning rate
 dropout_pkeep = 0.8    # some dropout
 
-# load data, either shakespeare, or the Python source of Tensorflow itself
+# Download Test Data of Random Authors
+# for i in list(range(101,120)):
+#     try:
+#         filename = "/home/christian/Documents/MLML/shakespeare-generator/tensorflowshakespeare/authors/random/testfile" + str(i) + ".txt"
+#         print("Starting: " + str(i))
+#         url = 'http://www.gutenberg.org/files/' + str(i) + '/' + str(i) + '.txt'
+#         response = urllib.request.urlopen(url)
+#         file = open(filename, 'wb')
+#         file.write(response.read())
+#         file.close()
+#         response.close()
+#         try:
+#             test_sets, nothing, nothing = txt.read_data_files(filename, validation=True)
+#         except:
+#             os.remove(filename)
+#             print("issue with file")
+#     except:
+#         print("download failed for" + str(i))
+#
+# print("Completed")
 
-codetext, nothing, nothing = txt.read_data_files("authors/hemmingway/farewelltraining.txt", validation=True)
-test_set_shakespeare, nothing, nothing = txt.read_data_files("authors/shakespeare_valid/*.txt", validation=True)
-test_set_charles, nothing, nothing = txt.read_data_files("authors/jkrowling/*.txt", validation=False)
+codetext, nothing, nothing = txt.read_data_files("authors/shakespeare/*.txt", validation=False)
+onlyfiles = [f for f in listdir("authors/random/") if isfile(join("authors/random/", f))]
 
-with open('results/results_jkrowling.csv',mode='w') as csvfile:
+with open('results/loss_shakespeare_random_authors.csv',mode='w') as csvfile:
     writer = csv.writer(csvfile, delimiter=',')
 
     # display some stats on the data
     epoch_size = len(codetext) // (BATCHSIZE * SEQLEN)
-    txt.print_data_stats(len(codetext), len(test_set_shakespeare), epoch_size)
 
     #
     # the model (see FAQ in README.md)
@@ -134,9 +134,9 @@ with open('results/results_jkrowling.csv',mode='w') as csvfile:
     step = 0
 
     # training loop
-    for x, y_, epoch in txt.rnn_minibatch_sequencer(codetext, BATCHSIZE, SEQLEN, nb_epochs=100):
+    for x, y_, epoch in txt.rnn_minibatch_sequencer(codetext, BATCHSIZE, SEQLEN, nb_epochs=10):
 
-        # train on one minibatch
+        #train on one minibatch
         feed_dict = {X: x, Y_: y_, Hin: istate, lr: learning_rate, pkeep: dropout_pkeep, batchsize: BATCHSIZE}
         _, y, ostate = sess.run([train_step, Y, H], feed_dict=feed_dict)
 
@@ -145,69 +145,31 @@ with open('results/results_jkrowling.csv',mode='w') as csvfile:
             feed_dict = {X: x, Y_: y_, Hin: istate, pkeep: 1.0, batchsize: BATCHSIZE}  # no dropout for validation
             y, l, bl, acc, smm = sess.run([Y, seqloss, batchloss, accuracy, summaries], feed_dict=feed_dict)
             summary_writer.add_summary(smm, step)
-
-        # run a validation step every 50 batches
-        # The validation text should be a single sequence but that's too slow (1s per 1024 chars!),
-        # so we cut it up and batch the pieces (slightly inaccurate)
-        # tested: validating with 5K sequences instead of 1K is only slightly more accurate, but a lot slower.
-        if step > _50_BATCHES and len(test_set_shakespeare) > 0:
-            print("SHAKESPEARE VALIDATION TIME!/n")
-            VALI_SEQLEN = 1*1024  # Sequence length for validation. State will be wrong at the start of each sequence.
-            bsize = int(len(test_set_shakespeare)/10) // VALI_SEQLEN
-            vali_x, vali_y, _ = next(txt.rnn_minibatch_sequencer(test_set_shakespeare, bsize, VALI_SEQLEN, 1))  # all data in 1 batch
-            vali_nullstate = np.zeros([bsize, INTERNALSIZE*NLAYERS])
-            feed_dict = {X: vali_x, Y_: vali_y, Hin: vali_nullstate, pkeep: 1.0,  # no dropout for validation
-                         batchsize: bsize}
-            ls, acc, smm = sess.run([batchloss, accuracy, summaries], feed_dict=feed_dict)
             training_loss = str(sum(l) / float(len(l)))
             print("Training Loss: " + training_loss)
-            txt.print_validation_stats(ls, acc)
-            # save validation data for Tensorboard
-            validation_writer.add_summary(smm, step)
-            print("CHARLES VALIDATION TIME!/n")
-
-            VALI_SEQLEN = 1 * 1024  # Sequence length for validation. State will be wrong at the start of each sequence.
-            bsize = int(len(test_set_charles)/10) // VALI_SEQLEN
-            vali_x2, vali_y2, _ = next(txt.rnn_minibatch_sequencer(test_set_charles, bsize, VALI_SEQLEN, 1))  # all data in 1 batch
-            vali_nullstate = np.zeros([bsize, INTERNALSIZE * NLAYERS])
-            feed_dict2 = {X: vali_x2, Y_: vali_y2, Hin: vali_nullstate, pkeep: 1.0,  # no dropout for validation
-                         batchsize: bsize}
-            ls2, acc2, smm2 = sess.run([batchloss, accuracy, summaries], feed_dict=feed_dict2)
-            txt.print_validation_stats(ls2, acc2)
-            # save validation data for Tensorboard
-            validation_writer.add_summary(smm2, step)
-
-            writer.writerow([ls, ls2, training_loss])
-
-            step = 0
+            print("EPOCH: " + str(epoch))
 
         # display progress bar
         progress.step(reset=step % _50_BATCHES == 0)
-
+        break;
 
         # loop state around
         istate = ostate
-        step += BATCHSIZE * SEQLEN * 2
+        step += BATCHSIZE * SEQLEN
 
-    # all runs: SEQLEN = 30, BATCHSIZE = 100, ALPHASIZE = 98, INTERNALSIZE = 512, NLAYERS = 3
-    # run 1477669632 decaying learning rate 0.001-0.0001-1e7 dropout 0.5: not good
-    # run 1477670023 lr=0.001 no dropout: very good
+    #Validation on multiple texts
+    for file in onlyfiles:
+        print("VALIDATION TIME!/n")
+        test_set, nothing, nothing = txt.read_data_files("authors/random/" + file, validation=False)
+        VALI_SEQLEN = 1 * 1024  # Sequence length for validation. State will be wrong at the start of each sequence.
+        bsize = len(test_set)// VALI_SEQLEN
+        vali_x, vali_y, _ = next(txt.rnn_minibatch_sequencer(test_set, bsize, VALI_SEQLEN, 1))  # all data in 1 batch
+        vali_nullstate = np.zeros([bsize, INTERNALSIZE * NLAYERS])
+        feed_dict = {X: vali_x, Y_: vali_y, Hin: vali_nullstate, pkeep: 1.0,  # no dropout for validation
+                         batchsize: bsize}
+        ls, acc, smm = sess.run([batchloss, accuracy, summaries], feed_dict=feed_dict)
+        txt.print_validation_stats(ls, acc)
+        # save validation data for Tensorboard
+        validation_writer.add_summary(smm, step)
 
-    # Tensorflow runs:
-    # 1485434262
-    #   trained on shakespeare/t*.txt only. Validation on 1K sequences
-    #   validation loss goes up from step 5M (overfitting because of small dataset)
-    # 1485436038
-    #   trained on shakespeare/t*.txt only. Validation on 5K sequences
-    #   On 5K sequences validation accuracy is slightly higher and loss slightly lower
-    #   => sequence breaks do introduce inaccuracies but the effect is small
-    # 1485437956
-    #   Trained on shakespeare/*.txt. Validation on 1K sequences
-    #   On this much larger dataset, validation loss still decreasing after 6 epochs (step 35M)
-    # 1495447371
-    #   Trained on shakespeare/*.txt no dropout, 30 epochs
-    #   Validation loss starts going up after 10 epochs (overfitting)
-    # 1495440473
-    #   Trained on shakespeare/*.txt "naive dropout" pkeep=0.8, 30 epochs
-    #   Dropout brings the validation loss under control, preventing it from
-    #   going up but the effect is small.
+        writer.writerow([str(ls),file])
