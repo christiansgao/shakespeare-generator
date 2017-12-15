@@ -2,3 +2,15 @@
 tensorflowshakespeare/checkpoints/*
 tensorflowshakespeare/checkpointsold/*
 tensorflowshakespeare/mycheckpoints/*
+markdown-paper/*.Rproj.user
+markdown-paper/*.Rhistory
+markdown-paper/*.RData
+markdown-paper/*.Ruserdata
+markdown-paper/*.aux
+markdown-paper/*.bbl
+markdown-paper/*.blg
+markdown-paper/*.log
+markdown-paper/*.out
+markdown-paper/*.spl
+markdown-paper/*.tex
+markdown-paper/*.html
