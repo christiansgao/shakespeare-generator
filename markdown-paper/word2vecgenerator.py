@@ -1,9 +1,10 @@
 import gensim
+import string
 from random import *
 
 print(random())
 def getWordsList(words_file):
-    open_file = open(words_file, 'r')
+    open_file = open(words_file, 'w')
     words_list =[]
     words_list2 = []
     contents = open_file.readlines()
@@ -32,23 +33,23 @@ def writeWords(words_file, words_list):
 words_list = getWordsList("data/farewelltraining.txt")
 
 # Load Google's pre-trained Word2Vec model.
-model = gensim.models.KeyedVectors.load_word2vec_format('/Users/christian.gao/Documents/MAS/415/shakespeare-generator/markdown-paper/models/GoogleNews-vectors-negative300.bin.gz', binary=True)
+model = gensim.models.KeyedVectors.load_word2vec_format('/home/christian/Documents/MLML/shakespeare-generator/markdown-paper/models/GoogleNews-vectors-negative300.bin.gz', binary=True)
 
-words_list_boot = []
+for i in list(range(100)):
+    words_list_boot = []
+    for words in words_list:
+        words_boot = []
+        for word in words:
+            if word != '' and random() < .3 and word in model.vocab:
+                most_similar_word = model.wv.most_similar_cosmul(word)[0][0]
+                words_boot.append(most_similar_word)
+            else:
+                words_boot.append(word)
 
-for words in words_list:
-    words_boot = []
-    for word in words:
-        if word != '' and random() < .3 and word in model.vocab:
-            most_similar_word = model.wv.most_similar_cosmul(word)[0][0]
-            words_boot.append(most_similar_word)
-        else:
-            words_boot.append(word)
+        print(words_boot)
+        if words_boot.__len__() != 0:
+            words_list_boot.append(words_boot)
 
-    print(words_boot)
-    if words_boot.__len__() != 0:
-        words_list_boot.append(words_boot)
-
-writeWords("data/farewellbootstrapped.txt", words_list_boot)
+    writeWords(string.Format("data/farewellbootstrapped{}.txt",i), words_list_boot)
 
 #print(most_similar_word)
