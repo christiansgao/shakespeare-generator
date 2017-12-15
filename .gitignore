@@ -14,3 +14,5 @@ markdown-paper/*.out
 markdown-paper/*.spl
 markdown-paper/*.tex
 markdown-paper/*.html
+markdown-paper/models/GoogleNews-vectors-negative300.bin.gz
+

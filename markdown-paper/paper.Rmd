@@ -8,7 +8,7 @@ output:
 title: "Did Shakespeare Really Write Shakespeare? A Monte Carlo Approach"
 thanks: "Special Thanks to My High School English Teachers"
 author: "Christian Gao"
-abstract: "The Shakespeare authorship"
+abstract: "The Shakespeare authorship question is the debate that William Shakespeare was not the true author of his works. Anti-Stratfordians, people who believe Shakespeare did not write his plays site various evidence such as Shakespeare's poor village, his inconsistent signature, his illiterate parents, a lack of any written material or letters (besides poorly drawn signatures) by his siblings or children as evidence that he was not the author of his plays. Some of the alternative theories suggest that these plays were written by multiple authors or that Shakespeare had collaborated with other authors such as Christopher Marlowe. We will attempt to use modern text prediction techniques as well as monte carlo simulations to test this theory. If Shakespeare is truely the author of his plays, the prediction error rate after training a language generation LSTM model should be constant throughout his plays with no one play significantly differenct in prediction error. Later we will attempt to generalize these methods to develop a system that can tell if two papers are written by the same person and the total number of authors given a list of papers."
 keywords: "pandoc, r markdown, knitr"
 date: "`r format(Sys.time(), '%B %d, %Y')`"
 geometry: margin=1in
@@ -19,12 +19,6 @@ bibliography: ~/Dropbox/master.bib
 biblio-style: apsr
 ---
 # Introduction
-# Introduction
-
-**Lorem ipsum** dolor *sit amet*. 
-
-- Single asterisks italicize text *like this*. 
-- Double asterisks embolden text **like this**.
 
 Start a new paragraph with a blank line separating paragraphs.
 
