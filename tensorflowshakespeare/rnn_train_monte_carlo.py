@@ -25,16 +25,15 @@ dropout_pkeep = 0.8    # some dropout
 
 # load data, either shakespeare, or the Python source of Tensorflow itself
 
-codetext, nothing, nothing = txt.read_data_files("authors/hemmingway/farewelltraining.txt", validation=True)
-test_set_shakespeare, nothing, nothing = txt.read_data_files("authors/shakespeare_valid/*.txt", validation=True)
-test_set_charles, nothing, nothing = txt.read_data_files("authors/jkrowling/*.txt", validation=False)
+codetext, nothing, nothing = txt.read_data_files("authors/hemmingway/farewelltraining.txt", validation=False)
+test_set, nothing, nothing = txt.read_data_files("authors/hemmingway/farewelltesting.txt", validation=False)
 
-with open('results/results_jkrowling.csv',mode='w') as csvfile:
+with open('results/montecarlo.csv',mode='w') as csvfile:
     writer = csv.writer(csvfile, delimiter=',')
 
     # display some stats on the data
     epoch_size = len(codetext) // (BATCHSIZE * SEQLEN)
-    txt.print_data_stats(len(codetext), len(test_set_shakespeare), epoch_size)
+    txt.print_data_stats(len(codetext), len(codetext), epoch_size)
 
     #
     # the model (see FAQ in README.md)
@@ -117,7 +116,7 @@ with open('results/results_jkrowling.csv',mode='w') as csvfile:
     step = 0
 
     # training loop
-    for x, y_, epoch in txt.rnn_minibatch_sequencer(codetext, BATCHSIZE, SEQLEN, nb_epochs=100):
+    for x, y_, epoch in txt.rnn_minibatch_sequencer(codetext, BATCHSIZE, SEQLEN, nb_epochs=1000):
 
         # train on one minibatch
         feed_dict = {X: x, Y_: y_, Hin: istate, lr: learning_rate, pkeep: dropout_pkeep, batchsize: BATCHSIZE}
@@ -133,11 +132,11 @@ with open('results/results_jkrowling.csv',mode='w') as csvfile:
         # The validation text should be a single sequence but that's too slow (1s per 1024 chars!),
         # so we cut it up and batch the pieces (slightly inaccurate)
         # tested: validating with 5K sequences instead of 1K is only slightly more accurate, but a lot slower.
-        if step > _50_BATCHES and len(test_set_shakespeare) > 0:
-            print("SHAKESPEARE VALIDATION TIME!/n")
+        if step > _50_BATCHES and len(codetext) > 0:
+            print("MONTECARLO VALIDATION TIME!/n")
             VALI_SEQLEN = 1*1024  # Sequence length for validation. State will be wrong at the start of each sequence.
-            bsize = int(len(test_set_shakespeare)/10) // VALI_SEQLEN
-            vali_x, vali_y, _ = next(txt.rnn_minibatch_sequencer(test_set_shakespeare, bsize, VALI_SEQLEN, 1))  # all data in 1 batch
+            bsize = int(len(codetext)/10) // VALI_SEQLEN
+            vali_x, vali_y, _ = next(txt.rnn_minibatch_sequencer(codetext, bsize, VALI_SEQLEN, 1))  # all data in 1 batch
             vali_nullstate = np.zeros([bsize, INTERNALSIZE*NLAYERS])
             feed_dict = {X: vali_x, Y_: vali_y, Hin: vali_nullstate, pkeep: 1.0,  # no dropout for validation
                          batchsize: bsize}
@@ -147,20 +146,8 @@ with open('results/results_jkrowling.csv',mode='w') as csvfile:
             txt.print_validation_stats(ls, acc)
             # save validation data for Tensorboard
             validation_writer.add_summary(smm, step)
-            print("CHARLES VALIDATION TIME!/n")
 
-            VALI_SEQLEN = 1 * 1024  # Sequence length for validation. State will be wrong at the start of each sequence.
-            bsize = int(len(test_set_charles)/10) // VALI_SEQLEN
-            vali_x2, vali_y2, _ = next(txt.rnn_minibatch_sequencer(test_set_charles, bsize, VALI_SEQLEN, 1))  # all data in 1 batch
-            vali_nullstate = np.zeros([bsize, INTERNALSIZE * NLAYERS])
-            feed_dict2 = {X: vali_x2, Y_: vali_y2, Hin: vali_nullstate, pkeep: 1.0,  # no dropout for validation
-                         batchsize: bsize}
-            ls2, acc2, smm2 = sess.run([batchloss, accuracy, summaries], feed_dict=feed_dict2)
-            txt.print_validation_stats(ls2, acc2)
-            # save validation data for Tensorboard
-            validation_writer.add_summary(smm2, step)
-
-            writer.writerow([ls, ls2, training_loss])
+            writer.writerow([ls, training_loss])
 
             step = 0
 

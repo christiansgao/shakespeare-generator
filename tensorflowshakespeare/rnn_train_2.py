@@ -11,7 +11,7 @@ import os
 import time
 import math
 import numpy as np
-import my_txtutils as txt
+import tensorflowshakespeare.my_txtutils as txt
 tf.set_random_seed(0)
 import csv
 
@@ -25,11 +25,11 @@ dropout_pkeep = 0.8    # some dropout
 
 # load data, either shakespeare, or the Python source of Tensorflow itself
 
-codetext, nothing, nothing = txt.read_data_files("shakespeare/*.txt", validation=True)
-test_set_shakespeare, nothing, nothing = txt.read_data_files("shakespeare_valid/*.txt", validation=True)
-test_set_charles, nothing, nothing = txt.read_data_files("hemmingway/*.txt", validation=False)
+codetext, nothing, nothing = txt.read_data_files("authors/hemmingway/farewelltraining.txt", validation=True)
+test_set_shakespeare, nothing, nothing = txt.read_data_files("authors/shakespeare_valid/*.txt", validation=True)
+test_set_charles, nothing, nothing = txt.read_data_files("authors/jkrowling/*.txt", validation=False)
 
-with open('results/results_chareles.csv',mode='w') as csvfile:
+with open('results/results_jkrowling.csv',mode='w') as csvfile:
     writer = csv.writer(csvfile, delimiter=',')
 
     # display some stats on the data
@@ -117,7 +117,7 @@ with open('results/results_chareles.csv',mode='w') as csvfile:
     step = 0
 
     # training loop
-    for x, y_, epoch in txt.rnn_minibatch_sequencer(codetext, BATCHSIZE, SEQLEN, nb_epochs=1000):
+    for x, y_, epoch in txt.rnn_minibatch_sequencer(codetext, BATCHSIZE, SEQLEN, nb_epochs=100):
 
         # train on one minibatch
         feed_dict = {X: x, Y_: y_, Hin: istate, lr: learning_rate, pkeep: dropout_pkeep, batchsize: BATCHSIZE}
@@ -142,6 +142,8 @@ with open('results/results_chareles.csv',mode='w') as csvfile:
             feed_dict = {X: vali_x, Y_: vali_y, Hin: vali_nullstate, pkeep: 1.0,  # no dropout for validation
                          batchsize: bsize}
             ls, acc, smm = sess.run([batchloss, accuracy, summaries], feed_dict=feed_dict)
+            training_loss = str(sum(l) / float(len(l)))
+            print("Training Loss: " + training_loss)
             txt.print_validation_stats(ls, acc)
             # save validation data for Tensorboard
             validation_writer.add_summary(smm, step)
@@ -158,7 +160,7 @@ with open('results/results_chareles.csv',mode='w') as csvfile:
             # save validation data for Tensorboard
             validation_writer.add_summary(smm2, step)
 
-            writer.writerow([ls, ls2])
+            writer.writerow([ls, ls2, training_loss])
 
             step = 0
 

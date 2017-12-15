@@ -1,0 +1,2 @@
+sed "s/[[:alpha:].-]//g" farewell_sampler  ---clean stuff
+sed -i "/^Page |/d" * remove lines start with
