@@ -167,8 +167,10 @@ $endfor$
 
 $if(abstract)$
 \begin{abstract}
+\begin{HUGE}
 %% Text of abstract
 $abstract$
+\end{HUGE}
 \end{abstract}
 $endif$
 

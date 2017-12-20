@@ -154,6 +154,7 @@ $if(title)$
 $endif$
 $if(abstract)$
 \begin{abstract}
+\begin{LARGE}
 $abstract$
 $if(keyword)$
 \\
@@ -162,6 +163,7 @@ $for(keyword)$
 $keyword$$sep$ |
 $endfor$
 $endif$
+\end{LARGE}
 \end{abstract}
 $endif$
 

@@ -44,8 +44,8 @@ dropout_pkeep = 0.8    # some dropout
 #
 # print("Completed")
 
-codetext, nothing, nothing = txt.read_data_files("authors/shakespeare/farewelltraining.txt", validation=False)
-onlyfiles = [f for f in listdir("authors/random/") if isfile(join("authors/shakespeare/farewelltraining.txt", f))]
+codetext, nothing, nothing = txt.read_data_files("authors/shakespeare/*.txt", validation=False)
+onlyfiles = [f for f in listdir("authors/random/") if isfile(join("authors/random/", f))]
 
 with open('results/loss_shakespeare_random_authors.csv',mode='w') as csvfile:
     writer = csv.writer(csvfile, delimiter=',')
@@ -134,7 +134,7 @@ with open('results/loss_shakespeare_random_authors.csv',mode='w') as csvfile:
     step = 0
 
     # training loop
-    for x, y_, epoch in txt.rnn_minibatch_sequencer(codetext, BATCHSIZE, SEQLEN, nb_epochs=10):
+    for x, y_, epoch in txt.rnn_minibatch_sequencer(codetext, BATCHSIZE, SEQLEN, nb_epochs=2):
 
         #train on one minibatch
         feed_dict = {X: x, Y_: y_, Hin: istate, lr: learning_rate, pkeep: dropout_pkeep, batchsize: BATCHSIZE}
@@ -151,7 +151,6 @@ with open('results/loss_shakespeare_random_authors.csv',mode='w') as csvfile:
 
         # display progress bar
         progress.step(reset=step % _50_BATCHES == 0)
-        break;
 
         # loop state around
         istate = ostate
@@ -159,17 +158,20 @@ with open('results/loss_shakespeare_random_authors.csv',mode='w') as csvfile:
 
     #Validation on multiple texts
     for file in onlyfiles:
-        print("VALIDATION TIME!/n")
-        test_set, nothing, nothing = txt.read_data_files("authors/random/" + file, validation=False)
-        VALI_SEQLEN = 1 * 1024  # Sequence length for validation. State will be wrong at the start of each sequence.
-        bsize = len(test_set)// VALI_SEQLEN
-        vali_x, vali_y, _ = next(txt.rnn_minibatch_sequencer(test_set, bsize, VALI_SEQLEN, 1))  # all data in 1 batch
-        vali_nullstate = np.zeros([bsize, INTERNALSIZE * NLAYERS])
-        feed_dict = {X: vali_x, Y_: vali_y, Hin: vali_nullstate, pkeep: 1.0,  # no dropout for validation
-                         batchsize: bsize}
-        ls, acc, smm = sess.run([batchloss, accuracy, summaries], feed_dict=feed_dict)
-        txt.print_validation_stats(ls, acc)
-        # save validation data for Tensorboard
-        validation_writer.add_summary(smm, step)
+        try:
+            print("VALIDATION TIME!/n")
+            test_set, nothing, nothing = txt.read_data_files("authors/random/" + file, validation=False)
+            VALI_SEQLEN = 1 * 1024  # Sequence length for validation. State will be wrong at the start of each sequence.
+            bsize = len(test_set)// VALI_SEQLEN
+            vali_x, vali_y, _ = next(txt.rnn_minibatch_sequencer(test_set, bsize, VALI_SEQLEN, 1))  # all data in 1 batch
+            vali_nullstate = np.zeros([bsize, INTERNALSIZE * NLAYERS])
+            feed_dict = {X: vali_x, Y_: vali_y, Hin: vali_nullstate, pkeep: 1.0,  # no dropout for validation
+                             batchsize: bsize}
+            ls, acc, smm = sess.run([batchloss, accuracy, summaries], feed_dict=feed_dict)
+            txt.print_validation_stats(ls, acc)
+            # save validation data for Tensorboard
+            validation_writer.add_summary(smm, step)
 
-        writer.writerow([str(ls),file])
+            writer.writerow([str(ls),file])
+        except:
+            print("Error In Validation For: " + file)
